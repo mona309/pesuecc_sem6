@@ -1,0 +1,5 @@
+#.gitignore for workspace
+.env
+venv/
+__pycache__/
+*.pyc
