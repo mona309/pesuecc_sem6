@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from database import get_db
 from checkout import checkout_logic
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = FastAPI()
 SRN = "PES2UG23CS906"
@@ -12,7 +13,7 @@ templates = Jinja2Templates(directory="templates")
 @app.on_event("startup")
 def startup():
     db = get_db()
-    db.execute("CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT)")
+    db.execute("CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password_hash TEXT)")
     db.execute("CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT, fee INTEGER)")
     db.execute("CREATE TABLE IF NOT EXISTS registrations (username TEXT, event_id INTEGER)")
     db.commit()
@@ -26,8 +27,9 @@ def register_page(request: Request):
 @app.post("/register")
 def register(username: str = Form(...), password: str = Form(...)):
     db = get_db()
+    password_hash = generate_password_hash(password)
     try:
-        db.execute("INSERT INTO users VALUES (?,?)", (username, password))
+        db.execute("INSERT INTO users VALUES (?,?)", (username, password_hash))
         db.commit()
     except:
         return HTMLResponse("Username already exists. Try a different one.")
@@ -42,12 +44,12 @@ def login_page(request: Request):
 @app.post("/login", response_class=HTMLResponse)
 def login(request: Request, username: str = Form(...), password: str = Form(...)):
     db = get_db()
-    user = db.execute(
-        "SELECT * FROM users WHERE username=? AND password=?",
-        (username, password)
+    row = db.execute(
+        "SELECT password_hash FROM users WHERE username=?",
+        (username,)
     ).fetchone()
 
-    if not user:
+    if not row or not check_password_hash(row[0], password):
         return templates.TemplateResponse(
             "login.html",
             {"request": request, "error": "❌ Invalid username or password", "user": ""}

@@ -1,7 +1,12 @@
 from supabase import create_client, Client
+import os
 
-SUPABASE_URL = "https://pamwazeccnfpxiofjsix.supabase.co/" # Replace with your Supabase URL
-SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBhbXdhemVjY25mcHhpb2Zqc2l4Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2ODI5Mzg0OSwiZXhwIjoyMDgzODY5ODQ5fQ.lvnX6gR2DkOdtPdb9gz9sKcrHCVHvT5BtFxzkL0IGkE" # Replace with your Supabase API key
+# Load Supabase configuration from environment variables to avoid committing secrets.
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    raise RuntimeError("SUPABASE_URL and SUPABASE_KEY must be set as environment variables")
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
